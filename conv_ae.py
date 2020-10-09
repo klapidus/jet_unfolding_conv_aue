@@ -121,7 +121,7 @@ class AE(nn.Module):
 
         self.loss_fn = F.mse_loss
         self._loss = None
-        self.optim = optim.Adam(self.parameters(), lr=1.e-4, weight_decay=1.e-4)
+        self.optim = optim.Adam(self.parameters(), lr=utils.LEARNING_RATE, weight_decay=1.e-4)
 
     def forward(self, x):
         x = x.view(-1, utils.N_IMAGE_BINS, utils.N_IMAGE_BINS)

@@ -5,10 +5,13 @@ import jetutils
 import numpy as np
 
 
-N_IMAGE_BINS = 24
+#N_IMAGE_BINS = 24
 # N_IMAGE_BINS = 16
+N_IMAGE_BINS = 40
 BIN_WIDTH = 0.4/N_IMAGE_BINS/2
 
+LEARNING_RATE = 1.e-4
+#LEARNING_RATE = 1.e-3
 
 _mnumber = 1000
 def get_jets(vals, rotate=True):
@@ -30,6 +33,7 @@ def get_jets(vals, rotate=True):
   return jets
 
 
+#normalization issue
 def norm_hist_to_max(hist):
     max_ = np.amax(hist)
     if max_ > 0:

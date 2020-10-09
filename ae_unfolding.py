@@ -2,13 +2,11 @@ import torch
 import matplotlib.pyplot as plt
 
 from prepare_datasets import jet_dataloader_train, jet_dataloader_test, jetsPL_train, jetsPL_test
-import conv_ae
+#import conv_ae
+import conv_ae_paper
 import utils
 
 import numpy as np
-
-#clarify the issue
-#torch.multiprocessing.freeze_support()
 
 def train(epoch, models, log=None):
     train_size = len(jetsPL_train)
@@ -68,48 +66,51 @@ def test(models, loader, log=None):
     report = 'Test set:\n' + lines
     print(report)
 
-net = conv_ae.AE
 
-# models = {'4': net(4), '8': net(8), '16': net(16)}
-models = {'4': net(4), '8': net(8)}
-train_log = {k: [] for k in models}
-test_log = {k: [] for k in models}
+if __name__ == '__main__':
 
-training_loader = jet_dataloader_train
-test_loader = jet_dataloader_test
+    net = conv_ae_paper.AE
 
-for epoch in range(1, 30):
-    for model in models.values():
-        model.train()
-    train(epoch, models, train_log)
-    for model in models.values():
-       model.eval()
-    test(models, test_loader, test_log)
+    # models = {'4': net(4), '8': net(8), '16': net(16)}
+    models = {'4': net(4)}
+    #models = {'4': net(4), '8': net(8)}
+    train_log = {k: [] for k in models}
+    test_log = {k: [] for k in models}
 
+    training_loader = jet_dataloader_train
+    test_loader = jet_dataloader_test
 
-output_jets = []
-model = models['8']
+    for epoch in range(1, 10):
+        for model in models.values():
+            model.train()
+        train(epoch, models, train_log)
+        for model in models.values():
+            model.eval()
+        test(models, test_loader, test_log)
 
-# tensors = torch.stack(jetsPL_test)
-for jet in jetsPL_test:
-    with torch.no_grad():
-        jet_out = model(jet)
-        jet_out = torch.squeeze(jet_out, 0)
-        jet_out = jet_out.detach().numpy()
-        utils.scale_back(jet_out)
-        output_jets.append(jet_out)
+    output_jets = []
+    model = models['4']
 
-fig = plt.figure(figsize=(30, 30))
-for idx in range(0, 34):
-    jet = output_jets[idx].copy()
-    # jet = jetsPL_test[idx]
-    # print(jet)
-    h, _, _ = np.histogram2d(jet[:, 1], jet[:, 2], bins=utils.N_IMAGE_BINS, weights=jet[:, 0])
-    ax = fig.add_subplot(6, 6, idx + 1)
-    # ax.matshow(jet, interpolation='none')
-    #ax = fig.add_subplot(5, 5, idx + 1)
-    ax.matshow(h, interpolation='none')
-plt.show()
+    # tensors = torch.stack(jetsPL_test)
+    for jet in jetsPL_test:
+        with torch.no_grad():
+            jet_out = model(jet)
+            jet_out = torch.squeeze(jet_out, 0)
+            jet_out = jet_out.detach().numpy()
+            utils.scale_back(jet_out)
+            output_jets.append(jet_out)
+
+    fig = plt.figure(figsize=(30, 30))
+    for idx in range(0, 34):
+        jet = output_jets[idx].copy()
+        # jet = jetsPL_test[idx]
+        # print(jet)
+        h, _, _ = np.histogram2d(jet[:, 1], jet[:, 2], bins=utils.N_IMAGE_BINS, weights=jet[:, 0])
+        ax = fig.add_subplot(6, 6, idx + 1)
+        # ax.matshow(jet, interpolation='none')
+        # ax = fig.add_subplot(5, 5, idx + 1)
+        ax.matshow(h, interpolation='none')
+    plt.show()
 
 # fig = plt.figure(figsize=(10.0, 10.0))
 # fig = plt.figure()
