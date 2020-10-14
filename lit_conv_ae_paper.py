@@ -3,6 +3,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
+import pytorch_lightning as pl
+
 import utils
 
 # CHANNELS = (64, 128, 256)
@@ -145,13 +147,13 @@ class ConvDecoder(nn.Module):
         #dconv3 = self.act(dconv3)
         # dconv3 = self.dcl3_bn(dconv3)
 
-        #output = torch.tanh(dconv3)
+        output = torch.tanh(dconv3)
 
         #TODO CLARIFY WITH SOFTMAX
         #output = dconv3.view(-1, 1, 1600)
         #print('output.shape', output.shape)
         #act_softmax =
-        output = self.softmax(dconv3)
+        #output = self.softmax(dconv3)
         #decoded = output.view(-1, 1, 40, 40)
         #print('decoded.shape', decoded.shape)
 
@@ -159,28 +161,37 @@ class ConvDecoder(nn.Module):
 
 
 
-class AE(nn.Module):
-    def __init__(self, hidden_size=16):
-        super(AE, self).__init__()
-        self.Encoder = ConvEncoder(hidden_size=hidden_size)
-        self.Decoder = ConvDecoder(hidden_size=hidden_size)
+class LitAE(pl.LightningModule):
 
-        self.loss_fn = F.mse_loss
-        self._loss = None
-        self.optim = optim.Adam(self.parameters(), lr=utils.LEARNING_RATE, weight_decay=utils.WEIGHT_DECAY)
+    def __init__(self, hidden_size=16):
+        super().__init__()
+        self.encoder = ConvEncoder(hidden_size=hidden_size)
+        self.decoder = ConvDecoder(hidden_size=hidden_size)
+
+        # self.loss_fn = F.mse_loss
+        # self._loss = None
+        # self.optim = optim.Adam(self.parameters(), lr=utils.LEARNING_RATE, weight_decay=utils.WEIGHT_DECAY)
 
     def forward(self, x):
         #x = x.view(-1, utils.N_IMAGE_BINS, utils.N_IMAGE_BINS)
         x = torch.unsqueeze(x, 1)
-        h = self.Encoder(x)
-        output = self.Decoder(h)
+        h = self.encoder(x)
+        output = self.decoder(h)
         output = torch.squeeze(output, 1)
         return output
 
-    def decode(self, h):
-        with torch.no_grad():
-            return self.D(h)
+    def training_step(self, batch, batch_idx):
+        x = batch['pl']
+        print('x shape', x.shape)
+        input = torch.unsqueeze(x, 1)
+        hidden = self.encoder(input)
+        output = self.decoder(hidden)
+        output = torch.squeeze(output, 1)
+        print('output shape', output.shape)
+        loss = F.mse_loss(output, x)
+        self.log('train_loss', loss)
+        return loss
 
-    def loss(self, x, target, **kwargs):
-        self._loss = self.loss_fn(x, target, **kwargs)
-        return self._loss
+    def configure_optimizers(self):
+        optimizer = torch.optim.Adam(self.parameters(), lr=1.e-3)
+        return optimizer

@@ -8,10 +8,12 @@ import numpy as np
 #N_IMAGE_BINS = 24
 # N_IMAGE_BINS = 16
 N_IMAGE_BINS = 40
+#N_IMAGE_BINS = 20
 BIN_WIDTH = 0.4/N_IMAGE_BINS/2
 
-LEARNING_RATE = 1.e-4
-#LEARNING_RATE = 1.e-3
+#LEARNING_RATE = 1.e-5
+LEARNING_RATE = 1.e-3
+WEIGHT_DECAY = 0.0
 
 _mnumber = 1000
 def get_jets(vals, rotate=True):
@@ -33,16 +35,22 @@ def get_jets(vals, rotate=True):
   return jets
 
 
-#normalization issue
 def norm_hist_to_max(hist):
-    max_ = np.amax(hist)
+    max_ = np.max(hist)
+    min_ = np.min(hist)
+    #print('hist max', max_)
+    #print('hist min', min_)
     if max_ > 0:
-        h = np.divide(hist, 0.5*max_) #range (0,2)
-        return np.subtract(h, 1.0)    #(-1,1)
+        h = (hist - min_) / (max_ - min_) #range 0 - 1
+        h = np.divide(h, 0.5) #range (0,2)
+        h = np.subtract(h, 1.0)
+        #print('hist max', np.max(h))
+        #print('hist min', np.min(h))
+        return h    #(-1,1)
     else:
         return hist
 
 def scale_back(jet):
     jet = np.add(jet, 1.0)
     jet = np.multiply(jet, 0.5)
-
+    return jet

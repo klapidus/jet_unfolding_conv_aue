@@ -1,7 +1,7 @@
 import torch
 import matplotlib.pyplot as plt
 
-from prepare_datasets import jet_dataloader_train, jet_dataloader_test, jetsPL_train, jetsPL_test
+from prepare_datasets import jet_dataloader_train, jet_dataloader_test, jetsPL_train, jetsPL_test, jet_images_pl_test
 #import conv_ae
 import conv_ae_paper
 import utils
@@ -12,9 +12,9 @@ def train(epoch, models, log=None):
     train_size = len(jetsPL_train)
     for batch_idx, sample_batched in enumerate(training_loader):
 
-        # print('input shape', sample_batched['pl'].shape)
-        # print(conv_ae.Encoder(sample_batched['pl']))
-        # conv_ae.AE(sample_batched['pl'])
+        #print('input shape', sample_batched['pl'].shape)
+        #print(conv_ae.Encoder(sample_batched['pl']))
+        #conv_ae.AE(sample_batched['pl'])
 
         # print('batch_idx', batch_idx)
         for model in models.values():
@@ -80,7 +80,7 @@ if __name__ == '__main__':
     training_loader = jet_dataloader_train
     test_loader = jet_dataloader_test
 
-    for epoch in range(1, 10):
+    for epoch in range(1, 3):
         for model in models.values():
             model.train()
         train(epoch, models, train_log)
@@ -94,21 +94,26 @@ if __name__ == '__main__':
     # tensors = torch.stack(jetsPL_test)
     for jet in jetsPL_test:
         with torch.no_grad():
+            #batch with size 0:
+            jet = torch.unsqueeze(jet, 0)
             jet_out = model(jet)
             jet_out = torch.squeeze(jet_out, 0)
             jet_out = jet_out.detach().numpy()
-            utils.scale_back(jet_out)
+            #jet_out = utils.scale_back(jet_out)
             output_jets.append(jet_out)
 
     fig = plt.figure(figsize=(30, 30))
     for idx in range(0, 34):
         jet = output_jets[idx].copy()
-        # jet = jetsPL_test[idx]
+        #jet = jetsPL_test[idx]
         # print(jet)
         h, _, _ = np.histogram2d(jet[:, 1], jet[:, 2], bins=utils.N_IMAGE_BINS, weights=jet[:, 0])
         ax = fig.add_subplot(6, 6, idx + 1)
         # ax.matshow(jet, interpolation='none')
         # ax = fig.add_subplot(5, 5, idx + 1)
+
+        #h = jet_images_pl_test[idx]
+
         ax.matshow(h, interpolation='none')
     plt.show()
 

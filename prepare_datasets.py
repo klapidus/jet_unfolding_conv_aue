@@ -37,7 +37,7 @@ class JetPicturesDataset(Dataset):
 
 # np.save('jet_pl_input.npy', _jetsPL)
 _jetsPL = np.load('jet_pl_input.npy', allow_pickle=True)
-_jetsPL = _jetsPL[:40000]
+_jetsPL = _jetsPL[:5000]
 
 print('PL size = ', len(_jetsPL))
 BINS = np.linspace(-0.4, 0.4, num=utils.N_IMAGE_BINS+1)
@@ -61,6 +61,7 @@ for idx, _ in enumerate(_jetsPL):
     # h_dl = utils.norm_hist_to_max(h_dl)
 
     if np.random.randint(2) == 1:
+        #tensor_ = torch.from_numpy(h_pl.astype(np.float32))
         jetsPL_train.append(torch.from_numpy(h_pl.astype(np.float32)))
         # jetsDL_train.append(torch.from_numpy(h_dl.astype(np.float32)))
     else:
@@ -93,5 +94,5 @@ for idx, _ in enumerate(_jetsPL):
 jet_dataset_train = JetPicturesDataset(jetsPL_train, jetsPL_train)
 jet_dataset_test = JetPicturesDataset(jetsPL_test, jetsPL_test)
 
-jet_dataloader_train = DataLoader(jet_dataset_train, batch_size=256, shuffle=True, num_workers=1)
-jet_dataloader_test = DataLoader(jet_dataset_test, batch_size=256, shuffle=True, num_workers=1)
+jet_dataloader_train = DataLoader(jet_dataset_train, batch_size=256, shuffle=True, num_workers=4)
+jet_dataloader_test = DataLoader(jet_dataset_test, batch_size=256, shuffle=True, num_workers=4)
