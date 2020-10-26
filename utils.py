@@ -4,14 +4,24 @@ sys.path.append('/Users/klapidus/emd')
 import jetutils
 import numpy as np
 
+SAMPLE_SIZE = 400
+NUM_EPOCHS = 3
+
+# SAMPLE_SIZE = 4000
+# NUM_EPOCHS = 4
+
+NWORKERS = 4
 
 #N_IMAGE_BINS = 24
 # N_IMAGE_BINS = 16
-N_IMAGE_BINS = 40
-#N_IMAGE_BINS = 20
+# N_IMAGE_BINS = 40
+N_IMAGE_BINS = 30
+# N_IMAGE_BINS = 12
 BIN_WIDTH = 0.4/N_IMAGE_BINS/2
+BINS = np.linspace(-0.4, 0.4, num=N_IMAGE_BINS+1)
 
 #LEARNING_RATE = 1.e-5
+#LEARNING_RATE = 5.e-4 #decent res
 LEARNING_RATE = 1.e-3
 WEIGHT_DECAY = 0.0
 
@@ -34,23 +44,46 @@ def get_jets(vals, rotate=True):
           jets.append(jet)
   return jets
 
+def custom_mask(array, offset):
+    return array > 1.e-6
 
-def norm_hist_to_max(hist):
-    max_ = np.max(hist)
-    min_ = np.min(hist)
-    #print('hist max', max_)
-    #print('hist min', min_)
-    if max_ > 0:
-        h = (hist - min_) / (max_ - min_) #range 0 - 1
-        h = np.divide(h, 0.5) #range (0,2)
-        h = np.subtract(h, 1.0)
-        #print('hist max', np.max(h))
-        #print('hist min', np.min(h))
-        return h    #(-1,1)
-    else:
-        return hist
+
+def scale_hist(hist, offset=1.2):
+    # print('1', hist)
+    # print('sel_indices', sel_indices)
+    # print('2', hist)    #
+    # sel_indices = hist < 1.e-3
+    # hist = np.where(sel_indices, 0.0, np.log(hist + OFFSET)/np.log(1.0 + OFFSET))
+    return np.log(hist + offset)/np.log(1.0 + offset)
+
+
+def unscale_hist(hist, offset=1.2):
+    prod_ = hist * np.log(1.0 + offset)
+    return np.exp(prod_) - offset
+
+
+def norm_hist(hist):
+    return hist/np.sum(hist)
+
 
 def scale_back(jet):
     jet = np.add(jet, 1.0)
     jet = np.multiply(jet, 0.5)
     return jet
+
+
+def calc_girth(jet):
+    girth = 0.0
+    pt_sum = 0.0
+    for eta_bin in range(N_IMAGE_BINS):
+        for phi_bin in range(N_IMAGE_BINS):
+            eta_val = BINS[eta_bin] + BIN_WIDTH/2.0
+            phi_val = BINS[phi_bin] + BIN_WIDTH/2.0
+            pt_val = jet[eta_bin, phi_bin]
+            dr = np.sqrt(eta_val**2 + phi_val**2)
+            girth += pt_val * dr
+            pt_sum += pt_val
+    if pt_sum > 1.e-3:
+        return girth/pt_sum
+    else:
+        return 0.0
